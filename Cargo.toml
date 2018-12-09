@@ -1,0 +1,13 @@
+[package]
+name = "incredi-panel"
+version = "0.1.0"
+authors = ["Misha Wagner <mishajw@gmail.com>"]
+
+[dependencies]
+yaml-rust = "*"
+quick-xml = "*"
+
+[dependencies.sdl2]
+version = "*"
+default-features = false
+features = ["image", "ttf", "mixer", "gfx"]
