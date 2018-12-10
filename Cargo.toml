@@ -6,6 +6,7 @@ authors = ["Misha Wagner <mishajw@gmail.com>"]
 [dependencies]
 yaml-rust = "*"
 quick-xml = "*"
+error-chain = "*"
 
 [dependencies.sdl2]
 version = "*"
