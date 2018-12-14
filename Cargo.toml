@@ -7,6 +7,12 @@ authors = ["Misha Wagner <mishajw@gmail.com>"]
 yaml-rust = "*"
 quick-xml = "*"
 error-chain = "*"
+log = "*"
+
+# Use?
+clap = "*"
+regex = "*"
+lazy_static = "*"
 
 [dependencies.sdl2]
 version = "*"

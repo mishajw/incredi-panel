@@ -41,3 +41,8 @@ echo "Hello, <color hex='00ff00'>world!</color>"
 # If you want to include an image, use the `image` tag
 echo "Battery: <image src='battery-full.png'/>"
 ```
+
+## Design
+
+A thread is spawned to handle each item. These threads handle 
+

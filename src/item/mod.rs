@@ -33,15 +33,19 @@ impl<T: TextItem> Item for T {
         }
 
         println!("Drawing text: {}", text);
-        window
+        let font = window
             .font
             .render(&text)
             .blended(Color::RGBA(255, 0, 0, 255))
-            .chain_err(|| "Failed to draw text to window")?;
+            .chain_err(|| "Failed to create text")?;
 
         window
             .canvas
             .set_draw_color(Color::RGBA(195, 217, 255, 255));
+        window
+            .canvas
+            .copy(&font, None, None)
+            .chain_err(|| "Failed to write text to window")?;
         window.canvas.clear();
         window.canvas.present();
         Ok(())
