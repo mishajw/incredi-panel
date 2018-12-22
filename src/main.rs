@@ -40,6 +40,7 @@ fn run() -> Result<()> {
     Window::start(
         400,
         300,
+        Duration::from_secs(3),
         "/usr/share/fonts/TTF/Yrsa-Regular.ttf",
         items,
     )

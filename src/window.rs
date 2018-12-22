@@ -1,5 +1,7 @@
 use std::rc::Rc;
 use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 use error::*;
 use item::Item;
@@ -16,7 +18,9 @@ pub struct Window {
     /// The font used for drawing text
     pub font: Font,
     items: Vec<Rc<Item>>,
+    show_duration: Duration,
     receive: mpsc::Receiver<WindowCommand>,
+    send: mpsc::Sender<WindowCommand>,
 }
 
 impl Window {
@@ -24,6 +28,7 @@ impl Window {
     pub fn start(
         width: u32,
         height: u32,
+        show_duration: Duration,
         font_path: &str,
         items: Vec<Box<Item>>,
     ) -> Result<()>
@@ -54,7 +59,9 @@ impl Window {
             items: items.into_iter().map(|i| i.into()).collect(),
             font,
             sfml_window,
+            show_duration,
             receive,
+            send,
         };
 
         window.window_loop()
@@ -81,11 +88,15 @@ impl Window {
         match command {
             WindowCommand::Event(event) => return self.handle_event(event),
             WindowCommand::Show => {
-                // TODO
+                self.sfml_window.set_visible(true);
+                let show_duration = self.show_duration;
+                let send = self.send.clone();
+                thread::spawn(move || {
+                    thread::sleep(show_duration);
+                    send.send(WindowCommand::Hide).unwrap();
+                });
             }
-            WindowCommand::Hide => {
-                // TODO
-            }
+            WindowCommand::Hide => self.sfml_window.set_visible(false),
             WindowCommand::Quit => {
                 return Ok(true);
             }
@@ -119,7 +130,6 @@ impl Window {
 pub enum WindowCommand {
     Event(Event),
     Show,
-    #[allow(unused)]
     Hide,
     #[allow(unused)]
     Quit,
