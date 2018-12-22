@@ -20,9 +20,9 @@ impl<T: TextItem> Item for T {
         let text = self.get_text()?;
         let font = window.font.clone();
         let mut sfml_text: Text = Text::new(&text, &font, 24);
-        sfml_text.set_fill_color(&Color::RED);
-        sfml_text.set_outline_color(&Color::YELLOW);
-        sfml_text.set_outline_thickness(2.0);
+        sfml_text.set_fill_color(&Color::rgb(240, 240, 240));
+        sfml_text.set_outline_color(&Color::rgb(10, 10, 10));
+        sfml_text.set_outline_thickness(1.0);
         let bounds = sfml_text.global_bounds();
 
         trace!("Drawing text: \"{}\"", text);

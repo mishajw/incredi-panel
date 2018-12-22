@@ -40,9 +40,9 @@ fn run() -> Result<()> {
     // Start the window
     Window::start(
         400,
-        300,
+        200,
         Duration::from_secs(3),
-        "/usr/share/fonts/TTF/Yrsa-Regular.ttf",
+        "/usr/share/fonts/TTF/DejaVuSansMono.ttf",
         items,
         Anchor::TopRight,
         30,
