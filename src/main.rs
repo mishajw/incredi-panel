@@ -19,7 +19,7 @@ mod window;
 use std::time::Duration;
 
 use error::*;
-use window::Window;
+use window::{Anchor, Window};
 
 quick_main!(run);
 
@@ -44,6 +44,8 @@ fn run() -> Result<()> {
         Duration::from_secs(3),
         "/usr/share/fonts/TTF/Yrsa-Regular.ttf",
         items,
+        Anchor::TopRight,
+        30,
     )
     .chain_err(|| "Failed to start window")
 }

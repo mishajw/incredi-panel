@@ -7,7 +7,8 @@ use error::*;
 use item::Item;
 
 use sfml::graphics::{Color, Font, RenderTarget, RenderWindow};
-use sfml::window::{Event, Key, Style};
+use sfml::system::Vector2i;
+use sfml::window::{Event, Key, Style, VideoMode};
 
 const WINDOW_NAME: &str = "incredi";
 
@@ -21,6 +22,8 @@ pub struct Window {
     show_duration: Duration,
     receive: mpsc::Receiver<Command>,
     send: mpsc::Sender<Command>,
+    anchor: Anchor,
+    edge_distance: u32,
 }
 
 impl Window {
@@ -31,6 +34,8 @@ impl Window {
         show_duration: Duration,
         font_path: &str,
         items: Vec<Box<Item>>,
+        anchor: Anchor,
+        edge_distance: u32,
     ) -> Result<()>
     {
         info!("Starting window");
@@ -53,6 +58,7 @@ impl Window {
             &Default::default(),
         );
         sfml_window.set_vertical_sync_enabled(true);
+        send.send(Command::Show).unwrap();
 
         // Create incredi window object
         let mut window = Window {
@@ -62,6 +68,8 @@ impl Window {
             show_duration,
             receive,
             send,
+            anchor,
+            edge_distance,
         };
 
         window.window_loop()
@@ -89,6 +97,8 @@ impl Window {
             Command::Event(event) => return self.handle_event(event),
             Command::Show => {
                 self.sfml_window.set_visible(true);
+                let window_location = self.get_window_location();
+                self.sfml_window.set_position(&window_location);
                 let show_duration = self.show_duration;
                 let send = self.send.clone();
                 thread::spawn(move || {
@@ -123,6 +133,25 @@ impl Window {
         self.sfml_window.display();
         Ok(())
     }
+
+    fn get_window_location(&self) -> Vector2i {
+        let desktop_mode = VideoMode::desktop_mode();
+        let window_size = self.sfml_window.size();
+        let x = match self.anchor {
+            Anchor::TopLeft | Anchor::BottomLeft => self.edge_distance,
+            Anchor::TopRight | Anchor::BottomRight => {
+                desktop_mode.width - window_size.x - self.edge_distance
+            }
+        };
+        let y = match self.anchor {
+            Anchor::TopLeft | Anchor::TopRight => self.edge_distance,
+            Anchor::BottomLeft | Anchor::BottomRight => {
+                desktop_mode.height - window_size.y - self.edge_distance
+            }
+        };
+
+        Vector2i::new(x as i32, y as i32)
+    }
 }
 
 /// Commands that can be sent to the window
@@ -133,4 +162,13 @@ pub enum Command {
     Hide,
     #[allow(unused)]
     Quit,
+}
+
+/// Where to anchor the panel
+#[allow(unused)]
+pub enum Anchor {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
 }
