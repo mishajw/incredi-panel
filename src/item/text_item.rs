@@ -1,6 +1,6 @@
 use error::*;
 use item::Item;
-use window::{Window, WindowCommand};
+use window::{Command, Window};
 
 use std::sync::mpsc;
 use std::thread;
@@ -10,7 +10,7 @@ use sfml::graphics::{Color, RenderTarget, Text};
 pub trait TextItem: Send + Sync {
     fn start(
         &self,
-        window_command_channel: mpsc::Sender<WindowCommand>,
+        window_command_channel: mpsc::Sender<Command>,
     ) -> thread::JoinHandle<Result<()>>;
     fn get_text(&self) -> Result<String>;
 }
@@ -33,7 +33,7 @@ impl<T: TextItem> Item for T {
 
     fn start(
         &self,
-        redraw_channel: mpsc::Sender<WindowCommand>,
+        redraw_channel: mpsc::Sender<Command>,
     ) -> thread::JoinHandle<Result<()>>
     {
         <Self as TextItem>::start(self, redraw_channel)

@@ -19,8 +19,8 @@ pub struct Window {
     pub font: Font,
     items: Vec<Rc<Item>>,
     show_duration: Duration,
-    receive: mpsc::Receiver<WindowCommand>,
-    send: mpsc::Sender<WindowCommand>,
+    receive: mpsc::Receiver<Command>,
+    send: mpsc::Sender<Command>,
 }
 
 impl Window {
@@ -36,7 +36,7 @@ impl Window {
         info!("Starting window");
 
         // Start all the item threads
-        let (send, receive) = mpsc::channel::<WindowCommand>();
+        let (send, receive) = mpsc::channel::<Command>();
         // TODO: Handle the join handles
         let _item_handles = items
             .iter()
@@ -70,7 +70,7 @@ impl Window {
     fn window_loop(&mut self) -> Result<()> {
         loop {
             while let Some(event) = self.sfml_window.poll_event() {
-                if self.handle_command(WindowCommand::Event(event))? {
+                if self.handle_command(Command::Event(event))? {
                     return Ok(());
                 }
             }
@@ -84,20 +84,20 @@ impl Window {
     }
 
     /// Handle a command. Return true if the window should quit
-    fn handle_command(&mut self, command: WindowCommand) -> Result<bool> {
+    fn handle_command(&mut self, command: Command) -> Result<bool> {
         match command {
-            WindowCommand::Event(event) => return self.handle_event(event),
-            WindowCommand::Show => {
+            Command::Event(event) => return self.handle_event(event),
+            Command::Show => {
                 self.sfml_window.set_visible(true);
                 let show_duration = self.show_duration;
                 let send = self.send.clone();
                 thread::spawn(move || {
                     thread::sleep(show_duration);
-                    send.send(WindowCommand::Hide).unwrap();
+                    send.send(Command::Hide).unwrap();
                 });
             }
-            WindowCommand::Hide => self.sfml_window.set_visible(false),
-            WindowCommand::Quit => {
+            Command::Hide => self.sfml_window.set_visible(false),
+            Command::Quit => {
                 return Ok(true);
             }
         }
@@ -127,7 +127,7 @@ impl Window {
 
 /// Commands that can be sent to the window
 #[derive(Clone, Copy)]
-pub enum WindowCommand {
+pub enum Command {
     Event(Event),
     Show,
     Hide,

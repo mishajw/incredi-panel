@@ -31,10 +31,11 @@ fn run() -> Result<()> {
 
     // Create the items
     // TODO: Base off config
-    let items: Vec<Box<item::Item>> = vec![Box::new(item::Command::new(
-        vec!["echo".into(), "-n".into(), "hello".into()],
-        Duration::from_secs(5),
-    ))];
+    let items: Vec<Box<item::Item>> =
+        vec![Box::new(item::ScheduledCommand::new(
+            vec!["echo".into(), "-n".into(), "hello".into()],
+            Duration::from_secs(5),
+        ))];
 
     // Start the window
     Window::start(

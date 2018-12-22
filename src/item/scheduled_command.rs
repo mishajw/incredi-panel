@@ -6,18 +6,18 @@ use std::time::Duration;
 use error::*;
 use item::TextItem;
 use util;
-use window::WindowCommand;
+use window::Command;
 
-pub struct Command {
+pub struct ScheduledCommand {
     command_list: Vec<String>,
     interval: Duration,
     command_output: Arc<Mutex<String>>,
 }
 
-impl Command {
+impl ScheduledCommand {
     #[allow(missing_docs)]
     pub fn new(command_list: Vec<String>, interval: Duration) -> Self {
-        Command {
+        ScheduledCommand {
             command_list,
             interval,
             command_output: Arc::new(Mutex::new(String::new())),
@@ -36,14 +36,14 @@ impl Command {
     }
 }
 
-impl TextItem for Command {
+impl TextItem for ScheduledCommand {
     fn get_text(&self) -> Result<String> {
         Ok(self.command_output.lock().unwrap().clone())
     }
 
     fn start(
         &self,
-        redraw_channel: mpsc::Sender<WindowCommand>,
+        redraw_channel: mpsc::Sender<Command>,
     ) -> thread::JoinHandle<Result<()>>
     {
         let command_list = self.command_list.clone();
@@ -60,7 +60,7 @@ impl TextItem for Command {
                     String::from_utf8(output.stdout).chain_err(|| {
                         "Failed to decode bytes into utf8 string"
                     })?;
-                redraw_channel.send(WindowCommand::Show).unwrap();
+                redraw_channel.send(Command::Show).unwrap();
                 thread::sleep(interval);
             }
         })
