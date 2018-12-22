@@ -5,7 +5,7 @@ use window::{Command, Window};
 use std::sync::mpsc;
 use std::thread;
 
-use sfml::graphics::{Color, RenderTarget, Text};
+use sfml::graphics::{Color, Text};
 
 pub trait TextItem: Send + Sync {
     fn start(
@@ -18,16 +18,20 @@ pub trait TextItem: Send + Sync {
 impl<T: TextItem> Item for T {
     fn draw(&self, window: &mut Window) -> Result<()> {
         let text = self.get_text()?;
-        if text.is_empty() {
-            return Ok(());
-        }
+        let font = window.font.clone();
+        let mut sfml_text: Text = Text::new(&text, &font, 24);
+        sfml_text.set_fill_color(&Color::RED);
+        sfml_text.set_outline_color(&Color::YELLOW);
+        sfml_text.set_outline_thickness(2.0);
+        let bounds = sfml_text.global_bounds();
 
-        trace!("Drawing text: {}", text);
-        let mut text = Text::new(&text, &window.font, 24);
-        text.set_fill_color(&Color::RED);
-        text.set_outline_color(&Color::YELLOW);
-        text.set_outline_thickness(2.0);
-        window.sfml_window.draw(&text);
+        trace!("Drawing text: \"{}\"", text);
+        window.draw(
+            vec![&sfml_text],
+            (bounds.left + bounds.width) as u32,
+            (bounds.top + bounds.height) as u32,
+        );
+
         Ok(())
     }
 

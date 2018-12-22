@@ -6,7 +6,7 @@ use std::time::Duration;
 use error::*;
 use item::Item;
 
-use sfml::graphics::{Color, Font, RenderTarget, RenderWindow};
+use sfml::graphics::{Color, Drawable, Font, RenderTarget, RenderWindow};
 use sfml::system::Vector2i;
 use sfml::window::{Event, Key, Style, VideoMode};
 
@@ -17,7 +17,7 @@ pub struct Window {
     /// SFML window used for drawing
     pub sfml_window: RenderWindow,
     /// The font used for drawing text
-    pub font: Font,
+    pub font: Rc<Font>,
     items: Vec<Rc<Item>>,
     show_duration: Duration,
     receive: mpsc::Receiver<Command>,
@@ -63,7 +63,7 @@ impl Window {
         // Create incredi window object
         let mut window = Window {
             items: items.into_iter().map(|i| i.into()).collect(),
-            font,
+            font: Rc::new(font),
             sfml_window,
             show_duration,
             receive,
@@ -73,6 +73,12 @@ impl Window {
         };
 
         window.window_loop()
+    }
+
+    pub fn draw(&mut self, drawables: Vec<&Drawable>, width: u32, height: u32) {
+        for drawable in drawables {
+            self.sfml_window.draw(drawable);
+        }
     }
 
     fn window_loop(&mut self) -> Result<()> {
@@ -87,7 +93,7 @@ impl Window {
                     return Ok(());
                 }
             }
-            self.draw()?;
+            self.draw_items()?;
         }
     }
 
@@ -124,7 +130,7 @@ impl Window {
         }
     }
 
-    fn draw(&mut self) -> Result<()> {
+    fn draw_items(&mut self) -> Result<()> {
         trace!("Drawing window");
         self.sfml_window.clear(&Color::BLACK);
         for mut item in self.items.clone() {
