@@ -18,6 +18,7 @@ pub struct Config {
     pub anchor: Anchor,
     pub edge_distance: u32,
     pub vertical_centre_align: bool,
+    pub horizontal_centre_align: bool,
 }
 
 impl Config {
@@ -31,6 +32,7 @@ impl Config {
         config_get!(anchor, yaml_object, into_string, "top-right".into());
         config_get!(edge_distance, yaml_object, into_i64, 50);
         config_get!(vertical_centre_align, yaml_object, into_bool, true);
+        config_get!(horizontal_centre_align, yaml_object, into_bool, true);
         let font = Rc::new(
             Font::from_file(&font_path).chain_err(|| "Failed to load font")?,
         );
@@ -47,6 +49,7 @@ impl Config {
             anchor: anchor.parse()?,
             edge_distance: edge_distance as u32,
             vertical_centre_align,
+            horizontal_centre_align,
         })
     }
 }

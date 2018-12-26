@@ -83,6 +83,12 @@ impl Window {
         let grid_height =
             (height as f32 / self.config.grid_size as f32).ceil() as u32;
         let (grid_x, grid_y) = self.grid.find_space(grid_width, grid_height);
+
+        let x_offset = if self.config.horizontal_centre_align {
+            ((grid_width * self.config.grid_size) - width) / 2
+        } else {
+            0
+        };
         let y_offset = if self.config.vertical_centre_align {
             ((grid_height * self.config.grid_size) - height) / 2
         } else {
@@ -115,7 +121,9 @@ impl Window {
         }
         for drawable in drawables {
             let mut renderstates = create_renderstates();
-            renderstates.transform.translate(0.0, y_offset as f32);
+            renderstates
+                .transform
+                .translate(x_offset as f32, y_offset as f32);
             self.sfml_window
                 .draw_with_renderstates(drawable, renderstates);
         }

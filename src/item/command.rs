@@ -85,7 +85,7 @@ impl Command {
 
 impl TextItem for Command {
     fn get_text(&self) -> Result<String> {
-        Ok(self.command_output.lock().unwrap().clone())
+        Ok(self.command_output.lock().unwrap().trim().into())
     }
 }
 
