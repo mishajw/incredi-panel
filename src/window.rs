@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::sync::mpsc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::error::*;
 use crate::item::Item;
@@ -24,6 +24,7 @@ pub struct Window {
     send: mpsc::Sender<Command>,
     anchor: Anchor,
     edge_distance: u32,
+    last_shown: Option<Instant>,
 }
 
 impl Window {
@@ -70,6 +71,7 @@ impl Window {
             send,
             anchor,
             edge_distance,
+            last_shown: None,
         };
 
         window.window_loop()
@@ -102,7 +104,9 @@ impl Window {
         match command {
             Command::Event(event) => return self.handle_event(event),
             Command::Show => {
+                debug!("Showing window");
                 self.sfml_window.set_visible(true);
+                self.last_shown = Some(Instant::now());
                 let window_location = self.get_window_location();
                 self.sfml_window.set_position(&window_location);
                 let show_duration = self.show_duration;
@@ -112,8 +116,20 @@ impl Window {
                     send.send(Command::Hide).unwrap();
                 });
             }
-            Command::Hide => self.sfml_window.set_visible(false),
+            Command::Hide => {
+                debug!("Hiding window");
+                if self.last_shown.is_some()
+                    && Instant::now().duration_since(self.last_shown.unwrap())
+                        < self.show_duration
+                {
+                    debug!("Window not visible for long enough");
+                    return Ok(false);
+                }
+                self.sfml_window.set_visible(false);
+                self.last_shown = None;
+            }
             Command::Quit => {
+                info!("Quitting due to window command");
                 return Ok(true);
             }
         }
