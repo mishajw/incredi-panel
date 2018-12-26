@@ -121,18 +121,28 @@ impl Window {
 
     fn window_loop(&mut self) -> Result<()> {
         loop {
-            while let Some(event) = self.sfml_window.poll_event() {
-                if self.handle_command(Command::Event(event))? {
-                    return Ok(());
-                }
-            }
-            while let Ok(command) = self.receive.try_recv() {
+            for command in self.get_commands() {
                 if self.handle_command(command)? {
                     return Ok(());
                 }
             }
+
             self.draw_items()?;
         }
+    }
+
+    fn get_commands(&mut self) -> Vec<Command> {
+        let mut result = vec![];
+        if self.last_shown.is_none() {
+            result.push(self.receive.recv().unwrap());
+        }
+        while let Some(event) = self.sfml_window.poll_event() {
+            result.push(Command::Event(event));
+        }
+        while let Ok(command) = self.receive.try_recv() {
+            result.push(command);
+        }
+        result
     }
 
     /// Handle a command. Return true if the window should quit
