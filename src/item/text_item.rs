@@ -4,6 +4,8 @@ use crate::window::Window;
 
 use sfml::graphics::{Color, Text};
 
+const FONT_SIZE_SCALE: f32 = 1.40;
+
 pub trait TextItem: Send + Sync {
     fn get_text(&self) -> Result<String>;
 }
@@ -23,7 +25,7 @@ impl<T: TextItem> ItemDraw for T {
         window.draw(
             vec![&sfml_text],
             (bounds.left + bounds.width) as u32,
-            (bounds.top + bounds.height) as u32,
+            (window.config.font_size as f32 * FONT_SIZE_SCALE) as u32,
         );
 
         Ok(())
