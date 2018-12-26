@@ -141,7 +141,7 @@ pub type PushedCommand = Command;
 impl ThreadStart for PushedCommand {
     fn start(
         &self,
-        _window_command_channel: mpsc::Sender<window::Command>,
+        window_command_channel: mpsc::Sender<window::Command>,
     ) -> Result<()>
     {
         loop {
@@ -153,6 +153,9 @@ impl ThreadStart for PushedCommand {
             for line in stdout.lines() {
                 *self.command_output.lock().unwrap() =
                     line.chain_err(|| "Failed to read line")?;
+                if self.trigger_show {
+                    window_command_channel.send(window::Command::Show).unwrap();
+                }
             }
         }
     }
