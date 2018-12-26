@@ -14,14 +14,16 @@ use yaml_rust::Yaml;
 pub struct Command {
     command_list: Vec<String>,
     command_output: Arc<Mutex<String>>,
+    trigger_show: bool,
 }
 
 impl Command {
     #[allow(missing_docs)]
-    pub fn new(command_list: Vec<String>) -> Self {
+    pub fn new(command_list: Vec<String>, trigger_show: bool) -> Self {
         Command {
             command_list,
             command_output: Arc::new(Mutex::new(String::new())),
+            trigger_show,
         }
     }
 
@@ -30,6 +32,7 @@ impl Command {
         config_get!(interpreter, config, into_string);
         config_get!(script, config, into_string);
         config_get!(script_path, config, into_string);
+        config_get!(trigger_show, config, as_bool, false);
 
         if !command.is_empty() {
             if interpreter.is_some()
@@ -43,7 +46,7 @@ impl Command {
                 ));
             }
 
-            return Ok(Command::new(command));
+            return Ok(Command::new(command, trigger_show));
         }
 
         if let Some(interpreter) = interpreter {
@@ -55,25 +58,32 @@ impl Command {
 
             if let Some(script_path) = script_path {
                 let command = vec![interpreter, script_path];
-                return Ok(Command::new(command));
+                return Ok(Command::new(command, trigger_show));
             }
 
             if let Some(script) = script {
                 let command = vec![interpreter, "-c".into(), script];
-                return Ok(Command::new(command));
+                return Ok(Command::new(command, trigger_show));
             }
         }
 
         bail!(ErrorKind::ConfigError("No command specified".into()));
     }
 
-    fn update_text(&self) -> Result<()> {
+    fn update_text(
+        &self,
+        window_command_channel: mpsc::Sender<window::Command>,
+    ) -> Result<()>
+    {
         trace!("Executing command");
         let mut command = Command::create_command(self.command_list.clone())?;
         let output =
             command.output().chain_err(|| "Failed to execute command")?;
         *self.command_output.lock().unwrap() = String::from_utf8(output.stdout)
             .chain_err(|| "Failed to decode bytes into utf8 string")?;
+        if self.trigger_show {
+            window_command_channel.send(window::Command::Show).unwrap();
+        }
         Ok(())
     }
 
@@ -104,10 +114,10 @@ pub struct PulledCommand {
 impl PulledItem for PulledCommand {
     fn pull(
         &self,
-        _window_command_channel: mpsc::Sender<window::Command>,
+        window_command_channel: mpsc::Sender<window::Command>,
     ) -> Result<()>
     {
-        self.command.update_text()
+        self.command.update_text(window_command_channel)
     }
 
     fn get_interval(&self) -> Duration { self.interval }
