@@ -1,5 +1,5 @@
 mod command;
-pub use self::command::{Command, PulledCommand};
+pub use self::command::{Command, PulledCommand, PushedCommand};
 
 mod text_item;
 pub use self::text_item::TextItem;

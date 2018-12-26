@@ -132,6 +132,8 @@ fn get_items(
             config_get!(name, yaml_object, into_string, required);
             if name == item::PulledCommand::name() {
                 item::PulledCommand::parse(&mut yaml_object)
+            } else if name == item::PushedCommand::name() {
+                item::PushedCommand::parse(&mut yaml_object)
             } else {
                 Err(ErrorKind::ConfigError(format!(
                     "Unrecognized name: {}",

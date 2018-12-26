@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use std::io::{BufRead, BufReader};
 use std::process;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
 use crate::error::*;
 use crate::item::PulledItem;
-use crate::item::{Item, ItemFromConfig, TextItem};
+use crate::item::{Item, ItemFromConfig, TextItem, ThreadStart};
 use crate::window;
 
 use yaml_rust::Yaml;
@@ -70,23 +71,6 @@ impl Command {
         bail!(ErrorKind::ConfigError("No command specified".into()));
     }
 
-    fn update_text(
-        &self,
-        window_command_channel: mpsc::Sender<window::Command>,
-    ) -> Result<()>
-    {
-        trace!("Executing command");
-        let mut command = Command::create_command(self.command_list.clone())?;
-        let output =
-            command.output().chain_err(|| "Failed to execute command")?;
-        *self.command_output.lock().unwrap() = String::from_utf8(output.stdout)
-            .chain_err(|| "Failed to decode bytes into utf8 string")?;
-        if self.trigger_show {
-            window_command_channel.send(window::Command::Show).unwrap();
-        }
-        Ok(())
-    }
-
     fn create_command(command_list: Vec<String>) -> Result<process::Command> {
         ensure!(
             !command_list.is_empty(),
@@ -94,7 +78,7 @@ impl Command {
         );
         let mut command_iter = command_list.into_iter();
         let mut command = process::Command::new(command_iter.next().unwrap());
-        command.args(command_iter);
+        command.args(command_iter).stdout(process::Stdio::piped());
         Ok(command)
     }
 }
@@ -117,7 +101,18 @@ impl PulledItem for PulledCommand {
         window_command_channel: mpsc::Sender<window::Command>,
     ) -> Result<()>
     {
-        self.command.update_text(window_command_channel)
+        trace!("Pulling command");
+        let mut command =
+            Command::create_command(self.command.command_list.clone())?;
+        let output =
+            command.output().chain_err(|| "Failed to execute command")?;
+        *self.command.command_output.lock().unwrap() =
+            String::from_utf8(output.stdout)
+                .chain_err(|| "Failed to decode bytes into utf8 string")?;
+        if self.command.trigger_show {
+            window_command_channel.send(window::Command::Show).unwrap();
+        }
+        Ok(())
     }
 
     fn get_interval(&self) -> Duration { self.interval }
@@ -138,5 +133,37 @@ impl ItemFromConfig for PulledCommand {
             command: Command::parse(config)?,
             interval: Duration::from_millis((interval_sec * 1000.0) as u64),
         }))
+    }
+}
+
+pub type PushedCommand = Command;
+
+impl ThreadStart for PushedCommand {
+    fn start(
+        &self,
+        _window_command_channel: mpsc::Sender<window::Command>,
+    ) -> Result<()>
+    {
+        loop {
+            trace!("Starting pushed command");
+            let command = Command::create_command(self.command_list.clone())?
+                .spawn()
+                .chain_err(|| "Failed to start command")?;
+            let stdout = BufReader::new(command.stdout.unwrap());
+            for line in stdout.lines() {
+                *self.command_output.lock().unwrap() =
+                    line.chain_err(|| "Failed to read line")?;
+            }
+        }
+    }
+}
+
+impl Item for PushedCommand {}
+
+impl ItemFromConfig for PushedCommand {
+    fn name() -> &'static str { "pushed-command" }
+
+    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>> {
+        Ok(Box::new(PushedCommand::parse(config)?))
     }
 }
