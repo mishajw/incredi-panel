@@ -108,17 +108,25 @@ impl Window {
         };
 
         {
+            // Draw the border of the item
             let mut shape = RectangleShape::with_size(Vector2f::new(
-                (grid_width * self.config.grid_size) as f32,
-                (grid_height * self.config.grid_size) as f32,
+                (grid_width * self.config.grid_size) as f32
+                    - BORDER_THICKNESS * 2.0,
+                (grid_height * self.config.grid_size) as f32
+                    - BORDER_THICKNESS * 2.0,
             ));
             shape.set_fill_color(&Color::rgba(0, 0, 0, 0));
             let (r, g, b) = BORDER_COLOR;
             shape.set_outline_color(&Color::rgb(r, g, b));
             shape.set_outline_thickness(BORDER_THICKNESS);
+            let mut renderstates = create_renderstates();
+            renderstates
+                .transform
+                .translate(BORDER_THICKNESS, BORDER_THICKNESS);
             self.sfml_window
-                .draw_with_renderstates(&shape, create_renderstates());
+                .draw_with_renderstates(&shape, renderstates);
         }
+
         for drawable in drawables {
             let mut renderstates = create_renderstates();
             renderstates
