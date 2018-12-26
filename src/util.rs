@@ -1,6 +1,6 @@
 use std::thread;
 
-use error::*;
+use crate::error::*;
 
 use error_chain::ChainedError;
 

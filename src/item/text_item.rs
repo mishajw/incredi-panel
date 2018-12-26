@@ -1,6 +1,6 @@
-use error::*;
-use item::Item;
-use window::{Command, Window};
+use crate::error::*;
+use crate::item::Item;
+use crate::window::{Command, Window};
 
 use std::sync::mpsc;
 use std::thread;

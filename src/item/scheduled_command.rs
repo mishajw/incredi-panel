@@ -3,10 +3,10 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use error::*;
-use item::TextItem;
-use util;
-use window::Command;
+use crate::error::*;
+use crate::item::TextItem;
+use crate::util;
+use crate::window::Command;
 
 pub struct ScheduledCommand {
     command_list: Vec<String>,

@@ -2,6 +2,7 @@
 name = "incredi-panel"
 version = "0.1.0"
 authors = ["Misha Wagner <mishajw@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 yaml-rust = "*"

@@ -7,8 +7,8 @@ pub use self::text_item::TextItem;
 use std::sync::mpsc;
 use std::thread;
 
-use error::*;
-use window::{Command, Window};
+use crate::error::*;
+use crate::window::{Command, Window};
 
 pub trait Item: Send + Sync {
     /// Start a thread to handle the item

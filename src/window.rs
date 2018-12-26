@@ -3,8 +3,8 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
-use error::*;
-use item::Item;
+use crate::error::*;
+use crate::item::Item;
 
 use sfml::graphics::{Color, Drawable, Font, RenderTarget, RenderWindow};
 use sfml::system::Vector2i;
@@ -133,7 +133,7 @@ impl Window {
     fn draw_items(&mut self) -> Result<()> {
         trace!("Drawing window");
         self.sfml_window.clear(&Color::BLACK);
-        for mut item in self.items.clone() {
+        for item in self.items.clone() {
             item.draw(self)?;
         }
         self.sfml_window.display();
