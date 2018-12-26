@@ -82,6 +82,7 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
     config_get!(height, yaml_object, as_i64, 200);
     config_get!(show_duration_sec, yaml_object, as_f64, 3.0);
     config_get!(font_path, yaml_object, into_string, required);
+    config_get!(font_size, yaml_object, as_i64, 16);
     config_get!(anchor, yaml_object, into_string, "top-right".into());
     config_get!(edge_distance, yaml_object, into_i64, 50);
     config_get!(items, yaml_object, into_hash, list);
@@ -98,6 +99,7 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
         height as u32,
         Duration::from_millis((show_duration_sec * 1000.0) as u64),
         &font_path,
+        font_size as u32,
         anchor.parse()?,
         edge_distance as u32,
         items,

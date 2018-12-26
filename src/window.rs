@@ -18,6 +18,8 @@ pub struct Window {
     pub sfml_window: RenderWindow,
     /// The font used for drawing text
     pub font: Rc<Font>,
+    /// Size of the font
+    pub font_size: u32,
     items: Vec<Rc<Item>>,
     show_duration: Duration,
     receive: mpsc::Receiver<Command>,
@@ -34,6 +36,7 @@ impl Window {
         height: u32,
         show_duration: Duration,
         font_path: &str,
+        font_size: u32,
         anchor: Anchor,
         edge_distance: u32,
         items: Vec<Box<Item>>,
@@ -65,6 +68,7 @@ impl Window {
         let mut window = Window {
             items: items.into_iter().map(|i| i.into()).collect(),
             font: Rc::new(font),
+            font_size,
             sfml_window,
             show_duration,
             receive,
