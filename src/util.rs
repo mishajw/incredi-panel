@@ -12,7 +12,7 @@ where F: FnOnce() -> Result<T> {
     thread::spawn(|| {
         let result = callback();
         if let Err(ref err) = &result {
-            eprintln!("Error in thread: {}", err.display_chain());
+            error!("Error in thread: {}", err.display_chain());
         }
         result
     })
