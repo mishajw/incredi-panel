@@ -1,5 +1,6 @@
 use crate::error::*;
 use crate::item;
+use crate::item::ItemFromConfig;
 use crate::window::Window;
 
 use std::collections::HashMap;
@@ -7,10 +8,16 @@ use std::fs;
 use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
 
-macro_rules! parse {
+macro_rules! config_name {
+    ($name:ident) => {
+        str::replace(stringify!($name), "_", "-")
+    };
+}
+
+macro_rules! config_get {
     ($name:ident, $yaml:ident, $get_fn:ident) => {
         let $name = {
-            let name_str = str::replace(stringify!($name), "_", "-");
+            let name_str = config_name!($name);
             let yaml_value = $yaml.remove(&name_str);
             match yaml_value {
                 None => None,
@@ -29,17 +36,39 @@ macro_rules! parse {
     };
     ($name:ident, $yaml:ident, $get_fn:ident, required) => {
         let $name = {
-            parse!($name, $yaml, $get_fn);
-            let name_str = str::replace(stringify!($name), "_", "-");
+            let name_str = config_name!($name);
+            config_get!($name, $yaml, $get_fn);
             $name.ok_or(ErrorKind::ConfigError(format!(
                 "Value '{}' does not exist",
                 name_str,
             )))?
         };
     };
+    ($name:ident, $yaml:ident, $get_fn:ident, list) => {
+        let $name = {
+            let name_str = config_name!($name);
+            config_get!($name, $yaml, into_vec);
+            match $name {
+                None => vec![],
+                Some(array) => array
+                    .into_iter()
+                    .map(|v| {
+                        v.$get_fn().ok_or(
+                            ErrorKind::ConfigError(format!(
+                                "Failed to get '{}' field using '{}'",
+                                name_str,
+                                stringify!(get_fn),
+                            ))
+                            .into(),
+                        )
+                    })
+                    .collect::<Result<_>>()?,
+            }
+        };
+    };
     ($name:ident, $yaml:ident, $get_fn:ident, $default:expr) => {
         let $name = {
-            parse!($name, $yaml, $get_fn);
+            config_get!($name, $yaml, $get_fn);
             $name.unwrap_or($default)
         };
     };
@@ -49,18 +78,20 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
     let yaml = get_yaml(config_path)?;
     let mut yaml_object = get_object(yaml)?;
 
-    parse!(width, yaml_object, as_i64, 400);
-    parse!(height, yaml_object, as_i64, 200);
-    parse!(show_duration_sec, yaml_object, as_f64, 3.0);
-    parse!(font_path, yaml_object, into_string, required);
-    parse!(anchor, yaml_object, into_string, "top-right".into());
-    parse!(edge_distance, yaml_object, into_i64, 50);
-
-    let items: Vec<Box<item::Item>> =
-        vec![Box::new(item::ScheduledCommand::new(
-            vec!["echo".into(), "-n".into(), "hello".into()],
-            Duration::from_secs(5),
-        ))];
+    config_get!(width, yaml_object, as_i64, 400);
+    config_get!(height, yaml_object, as_i64, 200);
+    config_get!(show_duration_sec, yaml_object, as_f64, 3.0);
+    config_get!(font_path, yaml_object, into_string, required);
+    config_get!(anchor, yaml_object, into_string, "top-right".into());
+    config_get!(edge_distance, yaml_object, into_i64, 50);
+    config_get!(items, yaml_object, into_hash, list);
+    let items = get_items(
+        items
+            .into_iter()
+            .map(Yaml::Hash)
+            .map(get_object)
+            .collect::<Result<_>>()?,
+    )?;
 
     Window::start(
         width as u32,
@@ -104,4 +135,24 @@ fn get_object(yaml: Yaml) -> Result<HashMap<String, Yaml>> {
             Ok((key, value))
         })
         .collect::<Result<_>>()
+}
+
+fn get_items(
+    item_yamls: Vec<HashMap<String, Yaml>>,
+) -> Result<Vec<Box<item::Item>>> {
+    item_yamls
+        .into_iter()
+        .map(|mut yaml_object| {
+            config_get!(name, yaml_object, into_string, required);
+            if name == item::ScheduledCommand::name() {
+                item::ScheduledCommand::parse(&mut yaml_object)
+            } else {
+                Err(ErrorKind::ConfigError(format!(
+                    "Unrecognized name: {}",
+                    name
+                ))
+                .into())
+            }
+        })
+        .collect()
 }

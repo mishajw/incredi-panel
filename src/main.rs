@@ -11,6 +11,7 @@ extern crate sfml;
 #[macro_use]
 extern crate log;
 
+#[macro_use]
 mod config;
 mod error;
 mod item;

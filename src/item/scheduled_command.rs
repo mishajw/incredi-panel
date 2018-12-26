@@ -1,12 +1,15 @@
+use std::collections::HashMap;
 use std::process;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use crate::error::*;
-use crate::item::TextItem;
+use crate::item::{Item, ItemFromConfig, TextItem};
 use crate::util;
 use crate::window::Command;
+
+use yaml_rust::Yaml;
 
 pub struct ScheduledCommand {
     command_list: Vec<String>,
@@ -64,5 +67,53 @@ impl TextItem for ScheduledCommand {
                 thread::sleep(interval);
             }
         })
+    }
+}
+
+impl ItemFromConfig for ScheduledCommand {
+    fn name() -> &'static str { "scheduled-command" }
+
+    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>> {
+        config_get!(command, config, into_string, list);
+        config_get!(interpreter, config, into_string);
+        config_get!(script, config, into_string);
+        config_get!(script_path, config, into_string);
+        config_get!(interval_sec, config, into_f64, required);
+        let interval = Duration::from_millis((interval_sec * 1000.0) as u64);
+
+        if !command.is_empty() {
+            if interpreter.is_some()
+                || script.is_some()
+                || script_path.is_some()
+            {
+                bail!(ErrorKind::ConfigError(
+                    "If command is set, interpreter, script, and script_path \
+                     must not be"
+                        .into(),
+                ));
+            }
+
+            return Ok(Box::new(ScheduledCommand::new(command, interval)));
+        }
+
+        if let Some(interpreter) = interpreter {
+            if script.is_some() && script_path.is_some() {
+                bail!(ErrorKind::ConfigError(
+                    "Only one of script and script_path can be set".into(),
+                ));
+            }
+
+            if let Some(script_path) = script_path {
+                let command = vec![interpreter, script_path];
+                return Ok(Box::new(ScheduledCommand::new(command, interval)));
+            }
+
+            if let Some(script) = script {
+                let command = vec![interpreter, "-c".into(), script];
+                return Ok(Box::new(ScheduledCommand::new(command, interval)));
+            }
+        }
+
+        bail!(ErrorKind::ConfigError("No command specified".into()));
     }
 }
