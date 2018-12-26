@@ -21,20 +21,23 @@ impl Grid {
         for (i, f) in self.filled.iter().enumerate() {
             let i = i as u32;
             let space_left = self.width - f;
-            match (start_index, space_left >= width) {
-                (Some(si), true) => {
-                    max_column = max_column.max(*f);
-                    if i - si > height {
-                        self.fill(max_column, si, width, height);
-                        return (max_column, si);
+            if space_left >= width {
+                let si = match start_index {
+                    Some(si) => si,
+                    None => {
+                        start_index = Some(i);
+                        i
                     }
+                };
+
+                max_column = max_column.max(*f);
+                if i - si + 1 >= height {
+                    self.fill(max_column, si, width, height);
+                    return (max_column, si);
                 }
-                (Some(_), false) => {
-                    start_index = None;
-                    max_column = 0
-                }
-                (None, true) => start_index = Some(i),
-                (None, false) => {}
+            } else if start_index.is_some() {
+                start_index = None;
+                max_column = 0
             }
         }
 
