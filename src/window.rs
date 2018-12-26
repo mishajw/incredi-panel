@@ -33,9 +33,9 @@ impl Window {
         height: u32,
         show_duration: Duration,
         font_path: &str,
-        items: Vec<Box<Item>>,
         anchor: Anchor,
         edge_distance: u32,
+        items: Vec<Box<Item>>,
     ) -> Result<()>
     {
         info!("Starting window");
@@ -177,4 +177,23 @@ pub enum Anchor {
     TopRight,
     BottomLeft,
     BottomRight,
+}
+
+impl std::str::FromStr for Anchor {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(match s {
+            "top-left" => Anchor::TopLeft,
+            "top-right" => Anchor::TopRight,
+            "bottom-left" => Anchor::BottomLeft,
+            "bottom-right" => Anchor::BottomRight,
+            s => {
+                return Err(ErrorKind::ConfigError(format!(
+                    "Uncrecognized anchor: {}",
+                    s
+                ))
+                .into());
+            }
+        })
+    }
 }

@@ -4,8 +4,8 @@ error_chain! {
         CommandError(message: String) {
             display("Error executing command: {}", message)
         }
-        SdlError(message: String) {
-            display("Error with SDL2: {}", message)
+        ConfigError(message: String) {
+            display("Error with configuration: {}", message)
         }
     }
 }

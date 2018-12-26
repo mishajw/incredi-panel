@@ -11,41 +11,19 @@ extern crate sfml;
 #[macro_use]
 extern crate log;
 
+mod config;
 mod error;
 mod item;
 mod util;
 mod window;
 
-use std::time::Duration;
-
-use error::*;
-use window::{Anchor, Window};
-
 quick_main!(run);
 
-fn run() -> Result<()> {
+fn run() -> error::Result<()> {
     // Initialize logging
     let env = env_logger::Env::default()
         .filter_or(env_logger::DEFAULT_FILTER_ENV, "trace");
     env_logger::Builder::from_env(env).init();
 
-    // Create the items
-    // TODO: Base off config
-    let items: Vec<Box<item::Item>> =
-        vec![Box::new(item::ScheduledCommand::new(
-            vec!["echo".into(), "-n".into(), "hello".into()],
-            Duration::from_secs(5),
-        ))];
-
-    // Start the window
-    Window::start(
-        400,
-        200,
-        Duration::from_secs(3),
-        "/usr/share/fonts/TTF/DejaVuSansMono.ttf",
-        items,
-        Anchor::TopRight,
-        30,
-    )
-    .chain_err(|| "Failed to start window")
+    config::start_window_from_config("incredi.yaml")
 }
