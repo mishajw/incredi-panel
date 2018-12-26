@@ -78,8 +78,9 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
     let yaml = get_yaml(config_path)?;
     let mut yaml_object = get_object(yaml)?;
 
-    config_get!(width, yaml_object, as_i64, 400);
-    config_get!(height, yaml_object, as_i64, 200);
+    config_get!(grid_width, yaml_object, as_i64, 15);
+    config_get!(grid_height, yaml_object, as_i64, 10);
+    config_get!(grid_size, yaml_object, into_i64, 17);
     config_get!(show_duration_sec, yaml_object, as_f64, 3.0);
     config_get!(font_path, yaml_object, into_string, required);
     config_get!(font_size, yaml_object, as_i64, 16);
@@ -95,13 +96,14 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
     )?;
 
     Window::start(
-        width as u32,
-        height as u32,
+        grid_width as u32,
+        grid_height as u32,
         Duration::from_millis((show_duration_sec * 1000.0) as u64),
         &font_path,
         font_size as u32,
         anchor.parse()?,
         edge_distance as u32,
+        grid_size as u32,
         items,
     )
 }

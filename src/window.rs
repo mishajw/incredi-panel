@@ -6,11 +6,16 @@ use std::time::{Duration, Instant};
 use crate::error::*;
 use crate::item::Item;
 
-use sfml::graphics::{Color, Drawable, Font, RenderTarget, RenderWindow};
-use sfml::system::Vector2i;
+use sfml::graphics::{
+    Color, Drawable, Font, RectangleShape, RenderStates, RenderTarget,
+    RenderWindow, Shape, Transform,
+};
+use sfml::system::{Vector2f, Vector2i};
 use sfml::window::{Event, Key, Style, VideoMode};
 
 const WINDOW_NAME: &str = "incredi";
+const BORDER_COLOR: (u8, u8, u8) = (50, 50, 50);
+const BORDER_THICKNESS: f32 = 3.0;
 
 /// Window where the panel is displayed
 pub struct Window {
@@ -20,6 +25,9 @@ pub struct Window {
     pub font: Rc<Font>,
     /// Size of the font
     pub font_size: u32,
+    grid_width: u32,
+    grid_height: u32,
+    grid_size: u32,
     items: Vec<Rc<Item>>,
     show_duration: Duration,
     receive: mpsc::Receiver<Command>,
@@ -27,18 +35,20 @@ pub struct Window {
     anchor: Anchor,
     edge_distance: u32,
     last_shown: Option<Instant>,
+    grid: Grid,
 }
 
 impl Window {
     #[allow(missing_docs)]
     pub fn start(
-        width: u32,
-        height: u32,
+        grid_width: u32,
+        grid_height: u32,
         show_duration: Duration,
         font_path: &str,
         font_size: u32,
         anchor: Anchor,
         edge_distance: u32,
+        grid_size: u32,
         items: Vec<Box<Item>>,
     ) -> Result<()>
     {
@@ -56,7 +66,7 @@ impl Window {
         let font =
             Font::from_file(font_path).chain_err(|| "Failed to load font")?;
         let mut sfml_window = RenderWindow::new(
-            (width, height),
+            (grid_width * grid_size, grid_height * grid_size),
             WINDOW_NAME,
             Style::CLOSE,
             &Default::default(),
@@ -68,6 +78,9 @@ impl Window {
         let mut window = Window {
             items: items.into_iter().map(|i| i.into()).collect(),
             font: Rc::new(font),
+            grid_width,
+            grid_height,
+            grid_size,
             font_size,
             sfml_window,
             show_duration,
@@ -76,14 +89,44 @@ impl Window {
             anchor,
             edge_distance,
             last_shown: None,
+            grid: Grid::new(grid_width, grid_height),
         };
 
         window.window_loop()
     }
 
     pub fn draw(&mut self, drawables: Vec<&Drawable>, width: u32, height: u32) {
+        let grid_width = (width as f32 / self.grid_size as f32).ceil() as u32;
+        let grid_height = (height as f32 / self.grid_size as f32).ceil() as u32;
+        let (grid_x, grid_y) = self.grid.find_space(grid_width, grid_height);
+
+        let grid_size = self.grid_size;
+        let create_renderstates = move || {
+            let mut default = RenderStates::default();
+            let mut transform = Transform::default();
+            transform.translate(
+                (grid_x * grid_size) as f32,
+                (grid_y * grid_size) as f32,
+            );
+            default.transform = transform;
+            default
+        };
+
+        {
+            let mut shape = RectangleShape::with_size(Vector2f::new(
+                (grid_width * self.grid_size) as f32,
+                (grid_height * self.grid_size) as f32,
+            ));
+            shape.set_fill_color(&Color::rgba(0, 0, 0, 0));
+            let (r, g, b) = BORDER_COLOR;
+            shape.set_outline_color(&Color::rgb(r, g, b));
+            shape.set_outline_thickness(BORDER_THICKNESS);
+            self.sfml_window
+                .draw_with_renderstates(&shape, create_renderstates());
+        }
         for drawable in drawables {
-            self.sfml_window.draw(drawable);
+            self.sfml_window
+                .draw_with_renderstates(drawable, create_renderstates());
         }
     }
 
@@ -152,6 +195,7 @@ impl Window {
 
     fn draw_items(&mut self) -> Result<()> {
         trace!("Drawing window");
+        self.grid = Grid::new(self.grid_width, self.grid_height);
         self.sfml_window.clear(&Color::BLACK);
         for item in self.items.clone() {
             item.draw(self)?;
@@ -177,6 +221,60 @@ impl Window {
         };
 
         Vector2i::new(x as i32, y as i32)
+    }
+}
+
+struct Grid {
+    width: u32,
+    height: u32,
+    filled: Vec<u32>,
+}
+
+impl Grid {
+    fn new(width: u32, height: u32) -> Self {
+        Grid {
+            width,
+            height,
+            filled: vec![],
+        }
+    }
+
+    fn find_space(&mut self, width: u32, height: u32) -> (u32, u32) {
+        let width = width.min(self.width);
+        let height = height.min(self.height);
+        let mut start_index: Option<u32> = None;
+        let mut max_column: u32 = 0;
+        for (i, f) in self.filled.iter().enumerate() {
+            let i = i as u32;
+            let space_left = self.width - f;
+            match (start_index, space_left >= width) {
+                (Some(si), true) => {
+                    max_column = max_column.max(*f);
+                    if i - si > height {
+                        self.fill(max_column, si, width, height);
+                        return (max_column, si);
+                    }
+                }
+                (Some(_), false) => {
+                    start_index = None;
+                    max_column = 0
+                }
+                (None, true) => start_index = Some(i),
+                (None, false) => {}
+            }
+        }
+
+        let space_y = self.filled.len() as u32;
+        self.filled.append(&mut vec![0; height as usize]);
+        self.fill(0, space_y, width, height);
+        (0, space_y)
+    }
+
+    fn fill(&mut self, x: u32, y: u32, width: u32, height: u32) {
+        for i in y..(y + height) {
+            assert!(self.filled[i as usize] <= x);
+            self.filled[i as usize] = x + width;
+        }
     }
 }
 
