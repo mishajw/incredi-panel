@@ -1,11 +1,10 @@
 use crate::error::*;
 use crate::item;
 use crate::item::ItemFromConfig;
-use crate::window::Window;
+use crate::window::{Config, Window};
 
 use std::collections::HashMap;
 use std::fs;
-use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
 
 macro_rules! config_name {
@@ -78,14 +77,6 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
     let yaml = get_yaml(config_path)?;
     let mut yaml_object = get_object(yaml)?;
 
-    config_get!(grid_width, yaml_object, as_i64, 15);
-    config_get!(grid_height, yaml_object, as_i64, 10);
-    config_get!(grid_size, yaml_object, into_i64, 17);
-    config_get!(show_duration_sec, yaml_object, as_f64, 3.0);
-    config_get!(font_path, yaml_object, into_string, required);
-    config_get!(font_size, yaml_object, as_i64, 16);
-    config_get!(anchor, yaml_object, into_string, "top-right".into());
-    config_get!(edge_distance, yaml_object, into_i64, 50);
     config_get!(items, yaml_object, into_hash, list);
     let items = get_items(
         items
@@ -95,17 +86,8 @@ pub fn start_window_from_config(config_path: &str) -> Result<()> {
             .collect::<Result<_>>()?,
     )?;
 
-    Window::start(
-        grid_width as u32,
-        grid_height as u32,
-        Duration::from_millis((show_duration_sec * 1000.0) as u64),
-        &font_path,
-        font_size as u32,
-        anchor.parse()?,
-        edge_distance as u32,
-        grid_size as u32,
-        items,
-    )
+    let window_config = Config::parse(&mut yaml_object)?;
+    Window::start(window_config, items)
 }
 
 fn get_yaml(config_path: &str) -> Result<Yaml> {

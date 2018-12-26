@@ -13,6 +13,7 @@ extern crate log;
 
 #[macro_use]
 mod config;
+mod anchor;
 mod error;
 mod item;
 mod util;
