@@ -130,8 +130,8 @@ fn get_items(
         .into_iter()
         .map(|mut yaml_object| {
             config_get!(name, yaml_object, into_string, required);
-            if name == item::ScheduledCommand::name() {
-                item::ScheduledCommand::parse(&mut yaml_object)
+            if name == item::PulledCommand::name() {
+                item::PulledCommand::parse(&mut yaml_object)
             } else {
                 Err(ErrorKind::ConfigError(format!(
                     "Unrecognized name: {}",

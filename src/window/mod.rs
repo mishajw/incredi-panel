@@ -1,8 +1,7 @@
 mod config;
 mod grid;
 
-use std::rc::Rc;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Instant;
 
@@ -11,6 +10,7 @@ use self::grid::Grid;
 use crate::anchor::Anchor;
 use crate::error::*;
 use crate::item::Item;
+use crate::util;
 
 use sfml::graphics::{
     Color, Drawable, RectangleShape, RenderStates, RenderTarget, RenderWindow,
@@ -28,7 +28,7 @@ pub struct Window {
     /// SFML window used for drawing
     pub sfml_window: RenderWindow,
     pub config: Config,
-    items: Vec<Rc<Item>>,
+    items: Vec<Arc<Item>>,
     receive: mpsc::Receiver<Command>,
     send: mpsc::Sender<Command>,
     last_shown: Option<Instant>,
@@ -42,11 +42,13 @@ impl Window {
 
         // Start all the item threads
         let (send, receive) = mpsc::channel::<Command>();
-        // TODO: Handle the join handles
-        let _item_handles = items
-            .iter()
-            .map(|i| i.start(send.clone()))
-            .collect::<Vec<_>>();
+        let items: Vec<Arc<Item>> =
+            items.into_iter().map(|i| i.into()).collect();
+        items.iter().for_each(|i: &Arc<Item>| {
+            let i = i.clone();
+            let send = send.clone();
+            util::start_thread(move || i.start(send));
+        });
 
         // Set up SFML window
         let mut sfml_window = RenderWindow::new(

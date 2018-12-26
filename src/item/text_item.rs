@@ -1,21 +1,14 @@
 use crate::error::*;
-use crate::item::Item;
-use crate::window::{Command, Window};
-
-use std::sync::mpsc;
-use std::thread;
+use crate::item::ItemDraw;
+use crate::window::Window;
 
 use sfml::graphics::{Color, Text};
 
 pub trait TextItem: Send + Sync {
-    fn start(
-        &self,
-        window_command_channel: mpsc::Sender<Command>,
-    ) -> thread::JoinHandle<Result<()>>;
     fn get_text(&self) -> Result<String>;
 }
 
-impl<T: TextItem> Item for T {
+impl<T: TextItem> ItemDraw for T {
     fn draw(&self, window: &mut Window) -> Result<()> {
         let text = self.get_text()?;
         let font = window.config.font.clone();
@@ -34,13 +27,5 @@ impl<T: TextItem> Item for T {
         );
 
         Ok(())
-    }
-
-    fn start(
-        &self,
-        redraw_channel: mpsc::Sender<Command>,
-    ) -> thread::JoinHandle<Result<()>>
-    {
-        <Self as TextItem>::start(self, redraw_channel)
     }
 }
