@@ -1,3 +1,6 @@
+use crate::config::Config;
+use crate::error::*;
+
 use sfml::graphics::{Drawable, RenderStates};
 
 /// Configure how to draw a `Drawable` item
@@ -19,31 +22,22 @@ impl<'a, 'b, 'c, 'd> DrawableConfig<'a, 'b, 'c, 'd> {
 }
 
 /// Configure how to draw an item
-pub struct ItemDrawConfig {
-    /// The width of the item in pixels
-    pub width: u32,
-    /// The height of the item in pixels
-    pub height: u32,
+#[derive(Clone)]
+pub struct DrawConfig {
     /// Whether to verically centre the item
     pub vertical_centre_align: bool,
     /// Whether to horizontally centre the item
     pub horizontal_centre_align: bool,
 }
 
-impl ItemDrawConfig {
+impl DrawConfig {
     #[allow(missing_docs)]
-    pub fn new(
-        width: u32,
-        height: u32,
-        vertical_centre_align: bool,
-        horizontal_centre_align: bool,
-    ) -> Self
-    {
-        ItemDrawConfig {
-            width,
-            height,
+    pub fn parse(config: &mut Config) -> Result<Self> {
+        config_get!(vertical_centre_align, config, into_bool, true);
+        config_get!(horizontal_centre_align, config, into_bool, true);
+        Ok(DrawConfig {
             vertical_centre_align,
             horizontal_centre_align,
-        }
+        })
     }
 }

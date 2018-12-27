@@ -1,12 +1,11 @@
 use crate::anchor::Anchor;
+use crate::config;
 use crate::error::*;
 
-use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::Duration;
 
 use sfml::graphics::Font;
-use yaml_rust::Yaml;
 
 /// Configuration for a window
 #[allow(missing_docs)]
@@ -23,7 +22,7 @@ pub struct Config {
 
 impl Config {
     #[allow(missing_docs)]
-    pub fn parse(yaml_object: &mut HashMap<String, Yaml>) -> Result<Self> {
+    pub fn parse(yaml_object: &mut config::Config) -> Result<Self> {
         config_get!(grid_width, yaml_object, as_i64, 15);
         config_get!(grid_height, yaml_object, as_i64, 10);
         config_get!(grid_size, yaml_object, into_i64, 17);

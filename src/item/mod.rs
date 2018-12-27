@@ -4,15 +4,14 @@ mod command;
 pub use self::command::{Command, PulledCommand, PushedCommand};
 
 mod text_item;
-pub use self::text_item::TextItem;
+pub use self::text_item::{TextConfig, TextItem};
 
 mod pulled;
 pub use self::pulled::PulledItem;
 
-use std::collections::HashMap;
 use std::sync::mpsc;
 
-use crate::config::yaml_to_hash_map;
+use crate::config::{yaml_to_hash_map, Config};
 use crate::error::*;
 use crate::window;
 
@@ -42,13 +41,11 @@ pub trait ItemFromConfig {
     fn name() -> &'static str;
 
     /// Create the item from the config
-    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>>;
+    fn parse(config: &mut Config) -> Result<Box<Item>>;
 }
 
 /// Create a list of items from a configuration
-pub fn parse_items(
-    config: &mut HashMap<String, Yaml>,
-) -> Result<Vec<Box<Item>>> {
+pub fn parse_items(config: &mut Config) -> Result<Vec<Box<Item>>> {
     // Get the yaml objects for the items
     config_get!(items, config, into_hash, list);
     let item_yamls = items

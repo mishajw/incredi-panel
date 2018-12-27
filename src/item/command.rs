@@ -1,41 +1,46 @@
-use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::process;
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
+use crate::config::Config;
 use crate::error::*;
 use crate::item::PulledItem;
-use crate::item::{Item, ItemFromConfig, ItemStart, TextItem};
+use crate::item::{Item, ItemFromConfig, ItemStart, TextConfig, TextItem};
 use crate::window;
 
-use yaml_rust::Yaml;
-
 /// A command that can be run
-#[derive(Clone)]
 pub struct Command {
     command_list: Vec<String>,
     command_output: Arc<Mutex<String>>,
     trigger_show: bool,
+    text_config: TextConfig,
 }
 
 impl Command {
     #[allow(missing_docs)]
-    pub fn new(command_list: Vec<String>, trigger_show: bool) -> Self {
+    pub fn new(
+        command_list: Vec<String>,
+        trigger_show: bool,
+        text_config: TextConfig,
+    ) -> Self
+    {
         Command {
             command_list,
             command_output: Arc::new(Mutex::new(String::new())),
             trigger_show,
+            text_config,
         }
     }
 
     #[allow(missing_docs)]
-    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Self> {
+    fn parse(config: &mut Config) -> Result<Self> {
         config_get!(command, config, into_string, list);
         config_get!(interpreter, config, into_string);
         config_get!(script, config, into_string);
         config_get!(script_path, config, into_string);
         config_get!(trigger_show, config, as_bool, false);
+        let text_config = TextConfig::parse(config)?;
 
         if !command.is_empty() {
             if interpreter.is_some()
@@ -49,7 +54,7 @@ impl Command {
                 ));
             }
 
-            return Ok(Command::new(command, trigger_show));
+            return Ok(Command::new(command, trigger_show, text_config));
         }
 
         if let Some(interpreter) = interpreter {
@@ -61,12 +66,12 @@ impl Command {
 
             if let Some(script_path) = script_path {
                 let command = vec![interpreter, script_path];
-                return Ok(Command::new(command, trigger_show));
+                return Ok(Command::new(command, trigger_show, text_config));
             }
 
             if let Some(script) = script {
                 let command = vec![interpreter, "-c".into(), script];
-                return Ok(Command::new(command, trigger_show));
+                return Ok(Command::new(command, trigger_show, text_config));
             }
         }
 
@@ -87,13 +92,16 @@ impl Command {
 }
 
 impl TextItem for Command {
-    fn get_text(&self) -> Result<String> {
-        Ok(self.command_output.lock().unwrap().trim().into())
+    fn get_text(&self) -> Result<(String, TextConfig)> {
+        // TODO: Get rid of clone
+        Ok((
+            self.command_output.lock().unwrap().trim().into(),
+            self.text_config.clone(),
+        ))
     }
 }
 
 /// Command that can be pulled at an interval
-#[derive(Clone)]
 pub struct PulledCommand {
     command: Command,
     interval: Duration,
@@ -123,7 +131,9 @@ impl PulledItem for PulledCommand {
 }
 
 impl TextItem for PulledCommand {
-    fn get_text(&self) -> Result<String> { self.command.get_text() }
+    fn get_text(&self) -> Result<(String, TextConfig)> {
+        self.command.get_text()
+    }
 }
 
 impl Item for PulledCommand {}
@@ -131,7 +141,7 @@ impl Item for PulledCommand {}
 impl ItemFromConfig for PulledCommand {
     fn name() -> &'static str { "pulled-command" }
 
-    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>> {
+    fn parse(config: &mut Config) -> Result<Box<Item>> {
         config_get!(interval_sec, config, as_f64, required);
         Ok(Box::new(PulledCommand {
             command: Command::parse(config)?,
@@ -171,7 +181,7 @@ impl Item for PushedCommand {}
 impl ItemFromConfig for PushedCommand {
     fn name() -> &'static str { "pushed-command" }
 
-    fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>> {
+    fn parse(config: &mut Config) -> Result<Box<Item>> {
         Ok(Box::new(PushedCommand::parse(config)?))
     }
 }

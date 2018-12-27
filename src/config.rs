@@ -6,6 +6,9 @@ use std::collections::HashMap;
 use std::fs;
 use yaml_rust::{Yaml, YamlLoader};
 
+/// Configurations are a dictionary of value names to YAML values
+pub type Config = HashMap<String, Yaml>;
+
 macro_rules! config_name {
     ($name:ident) => {
         str::replace(stringify!($name), "_", "-")
@@ -73,13 +76,13 @@ macro_rules! config_get {
 }
 
 /// Get the configuration from a file
-pub fn get_config(config_path: &str) -> Result<HashMap<String, Yaml>> {
+pub fn get_config(config_path: &str) -> Result<Config> {
     let yaml = get_yaml(config_path)?;
     yaml_to_hash_map(yaml)
 }
 
 /// Convert a yaml object to a hash map
-pub fn yaml_to_hash_map(yaml: Yaml) -> Result<HashMap<String, Yaml>> {
+pub fn yaml_to_hash_map(yaml: Yaml) -> Result<Config> {
     yaml.into_hash()
         .ok_or(ErrorKind::ConfigError("Expected object".into()))?
         .into_iter()

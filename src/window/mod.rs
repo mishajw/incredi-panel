@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Instant;
 
 pub use self::config::Config;
-pub use self::draw::{DrawableConfig, ItemDrawConfig};
+pub use self::draw::{DrawConfig, DrawableConfig};
 use self::grid::Grid;
 use crate::anchor::Anchor;
 use crate::dock::dock_window;
@@ -88,25 +88,24 @@ impl Window {
     pub fn draw(
         &mut self,
         drawable_configs: Vec<DrawableConfig>,
-        item_draw_config: ItemDrawConfig,
+        draw_config: DrawConfig,
+        width: u32,
+        height: u32,
     )
     {
-        let grid_width = (item_draw_config.width as f32
-            / self.config.grid_size as f32)
-            .ceil() as u32;
-        let grid_height = (item_draw_config.height as f32
-            / self.config.grid_size as f32)
-            .ceil() as u32;
+        let grid_width =
+            (width as f32 / self.config.grid_size as f32).ceil() as u32;
+        let grid_height =
+            (height as f32 / self.config.grid_size as f32).ceil() as u32;
         let (grid_x, grid_y) = self.grid.find_space(grid_width, grid_height);
 
-        let x_offset = if item_draw_config.horizontal_centre_align {
-            ((grid_width * self.config.grid_size) - item_draw_config.width) / 2
+        let x_offset = if draw_config.horizontal_centre_align {
+            ((grid_width * self.config.grid_size) - width) / 2
         } else {
             0
         };
-        let y_offset = if item_draw_config.vertical_centre_align {
-            ((grid_height * self.config.grid_size) - item_draw_config.height)
-                / 2
+        let y_offset = if draw_config.vertical_centre_align {
+            ((grid_height * self.config.grid_size) - height) / 2
         } else {
             0
         };
