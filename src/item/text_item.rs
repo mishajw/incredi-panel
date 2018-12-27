@@ -1,6 +1,6 @@
 use crate::error::*;
 use crate::item::ItemDraw;
-use crate::window::Window;
+use crate::window::{DrawableConfig, ItemDrawConfig, Window};
 
 use sfml::graphics::{Color, Text};
 
@@ -25,9 +25,13 @@ impl<T: TextItem> ItemDraw for T {
 
         trace!("Drawing text: \"{}\"", text);
         window.draw(
-            vec![&sfml_text],
-            (bounds.left + bounds.width) as u32,
-            (window.config.font_size as f32 * FONT_SIZE_SCALE) as u32,
+            vec![DrawableConfig::new(&sfml_text)],
+            ItemDrawConfig::new(
+                (bounds.left + bounds.width) as u32,
+                (window.config.font_size as f32 * FONT_SIZE_SCALE) as u32,
+                true,
+                true,
+            ),
         );
 
         Ok(())

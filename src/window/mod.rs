@@ -1,6 +1,7 @@
 //! Handles window setup and drawing using SFML
 
 mod config;
+mod draw;
 mod grid;
 
 use std::sync::{mpsc, Arc};
@@ -8,6 +9,7 @@ use std::thread;
 use std::time::Instant;
 
 pub use self::config::Config;
+pub use self::draw::{DrawableConfig, ItemDrawConfig};
 use self::grid::Grid;
 use crate::anchor::Anchor;
 use crate::dock::dock_window;
@@ -16,8 +18,8 @@ use crate::item::Item;
 use crate::util;
 
 use sfml::graphics::{
-    Color, Drawable, RectangleShape, RenderStates, RenderTarget, RenderWindow,
-    Shape, Transform,
+    Color, RectangleShape, RenderStates, RenderTarget, RenderWindow, Shape,
+    Transform,
 };
 use sfml::system::{Vector2f, Vector2i};
 use sfml::window::{Event, Key, Style, VideoMode};
@@ -83,34 +85,30 @@ impl Window {
     }
 
     /// Draw a list of drawables to the window
-    pub fn draw(&mut self, drawables: Vec<&Drawable>, width: u32, height: u32) {
-        let grid_width =
-            (width as f32 / self.config.grid_size as f32).ceil() as u32;
-        let grid_height =
-            (height as f32 / self.config.grid_size as f32).ceil() as u32;
+    pub fn draw(
+        &mut self,
+        drawable_configs: Vec<DrawableConfig>,
+        item_draw_config: ItemDrawConfig,
+    )
+    {
+        let grid_width = (item_draw_config.width as f32
+            / self.config.grid_size as f32)
+            .ceil() as u32;
+        let grid_height = (item_draw_config.height as f32
+            / self.config.grid_size as f32)
+            .ceil() as u32;
         let (grid_x, grid_y) = self.grid.find_space(grid_width, grid_height);
 
-        let x_offset = if self.config.horizontal_centre_align {
-            ((grid_width * self.config.grid_size) - width) / 2
+        let x_offset = if item_draw_config.horizontal_centre_align {
+            ((grid_width * self.config.grid_size) - item_draw_config.width) / 2
         } else {
             0
         };
-        let y_offset = if self.config.vertical_centre_align {
-            ((grid_height * self.config.grid_size) - height) / 2
+        let y_offset = if item_draw_config.vertical_centre_align {
+            ((grid_height * self.config.grid_size) - item_draw_config.height)
+                / 2
         } else {
             0
-        };
-
-        let grid_size = self.config.grid_size;
-        let create_renderstates = move || {
-            let mut default = RenderStates::default();
-            let mut transform = Transform::default();
-            transform.translate(
-                (grid_x * grid_size) as f32,
-                (grid_y * grid_size) as f32,
-            );
-            default.transform = transform;
-            default
         };
 
         {
@@ -125,21 +123,32 @@ impl Window {
             let (r, g, b) = BORDER_COLOR;
             shape.set_outline_color(&Color::rgb(r, g, b));
             shape.set_outline_thickness(BORDER_THICKNESS);
-            let mut renderstates = create_renderstates();
-            renderstates
+            let mut render_states = {
+                let mut default = RenderStates::default();
+                let mut transform = Transform::default();
+                transform.translate(
+                    (grid_x * self.config.grid_size) as f32,
+                    (grid_y * self.config.grid_size) as f32,
+                );
+                default.transform = transform;
+                default
+            };
+            render_states
                 .transform
                 .translate(BORDER_THICKNESS, BORDER_THICKNESS);
             self.sfml_window
-                .draw_with_renderstates(&shape, renderstates);
+                .draw_with_renderstates(&shape, render_states);
         }
 
-        for drawable in drawables {
-            let mut renderstates = create_renderstates();
-            renderstates
-                .transform
-                .translate(x_offset as f32, y_offset as f32);
-            self.sfml_window
-                .draw_with_renderstates(drawable, renderstates);
+        for mut drawable_config in drawable_configs.into_iter() {
+            drawable_config.render_states.transform.translate(
+                ((grid_x * self.config.grid_size) + x_offset) as f32,
+                ((grid_y * self.config.grid_size) + y_offset) as f32,
+            );
+            self.sfml_window.draw_with_renderstates(
+                drawable_config.drawable,
+                drawable_config.render_states,
+            );
         }
     }
 
