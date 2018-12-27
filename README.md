@@ -55,3 +55,8 @@ echo "Battery: <image src='battery-full.png'/>"
 - `xdotool` >= 3.20160805.1
 - `csfml` >= 2.5-2
 
+## To do
+- Add transparency to unused grid cells
+- Add XML parsing of command output
+- Add FontAwesome for icons
+- Add images
