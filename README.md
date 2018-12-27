@@ -42,7 +42,9 @@ echo "Hello, <color hex='00ff00'>world!</color>"
 echo "Battery: <image src='battery-full.png'/>"
 ```
 
-## Design
-
-A thread is spawned to handle each item. These threads handle 
+## Prerequisites
+- `rustc` >= 1.31.0
+- `xprop` >= 1.2.3
+- `xdotool` >= 3.20160805.1
+- `csfml` >= 2.5-2
 
