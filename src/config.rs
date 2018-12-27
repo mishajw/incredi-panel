@@ -3,7 +3,9 @@
 use crate::error::*;
 
 use std::collections::HashMap;
+use std::env;
 use std::fs;
+
 use yaml_rust::{Yaml, YamlLoader};
 
 /// Configurations are a dictionary of value names to YAML values
@@ -76,8 +78,12 @@ macro_rules! config_get {
 }
 
 /// Get the configuration from a file
-pub fn get_config(config_path: &str) -> Result<Config> {
-    let yaml = get_yaml(config_path)?;
+pub fn get_config() -> Result<Config> {
+    let home = env::var("HOME").chain_err(|| "")?;
+    let config_home =
+        env::var("XDG_CONFIG_HOME").unwrap_or(format!("{}/.config", home));
+    let config_path = format!("{}/incredi/config.yaml", config_home);
+    let yaml = get_yaml(&config_path)?;
     yaml_to_hash_map(yaml)
 }
 

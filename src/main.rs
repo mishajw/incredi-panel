@@ -32,7 +32,7 @@ fn run() -> error::Result<()> {
     env_logger::Builder::from_env(env).init();
 
     // Parse config
-    let mut config = config::get_config("incredi.yaml")?;
+    let mut config = config::get_config()?;
     let items = item::parse_items(&mut config)?;
     let window_config = window::Config::parse(&mut config)?;
 
