@@ -8,6 +8,7 @@ use std::time::Instant;
 pub use self::config::Config;
 use self::grid::Grid;
 use crate::anchor::Anchor;
+use crate::dock::dock_window;
 use crate::error::*;
 use crate::item::Item;
 use crate::util;
@@ -62,6 +63,7 @@ impl Window {
         );
         sfml_window.set_vertical_sync_enabled(true);
         send.send(Command::Show).unwrap();
+        dock_window(WINDOW_NAME)?;
 
         // Create incredi window object
         let mut window = Window {
