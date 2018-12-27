@@ -28,6 +28,10 @@ pub struct DrawConfig {
     pub vertical_centre_align: bool,
     /// Whether to horizontally centre the item
     pub horizontal_centre_align: bool,
+    /// Vertical padding in pixels
+    pub vertical_padding: u32,
+    /// Horizontal padding in pixels
+    pub horizontal_padding: u32,
 }
 
 impl DrawConfig {
@@ -35,9 +39,13 @@ impl DrawConfig {
     pub fn parse(config: &mut Config) -> Result<Self> {
         config_get!(vertical_centre_align, config, into_bool, true);
         config_get!(horizontal_centre_align, config, into_bool, true);
+        config_get!(vertical_padding, config, into_i64, 0);
+        config_get!(horizontal_padding, config, into_i64, 0);
         Ok(DrawConfig {
             vertical_centre_align,
             horizontal_centre_align,
+            vertical_padding: vertical_padding as u32,
+            horizontal_padding: horizontal_padding as u32,
         })
     }
 }

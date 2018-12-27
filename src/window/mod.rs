@@ -93,6 +93,8 @@ impl Window {
         height: u32,
     )
     {
+        let width = width + draw_config.horizontal_padding * 2;
+        let height = height + draw_config.vertical_padding * 2;
         let grid_width =
             (width as f32 / self.config.grid_size as f32).ceil() as u32;
         let grid_height =
@@ -141,8 +143,12 @@ impl Window {
 
         for mut drawable_config in drawable_configs.into_iter() {
             drawable_config.render_states.transform.translate(
-                ((grid_x * self.config.grid_size) + x_offset) as f32,
-                ((grid_y * self.config.grid_size) + y_offset) as f32,
+                ((grid_x * self.config.grid_size)
+                    + x_offset
+                    + draw_config.horizontal_padding) as f32,
+                ((grid_y * self.config.grid_size)
+                    + y_offset
+                    + draw_config.vertical_padding) as f32,
             );
             self.sfml_window.draw_with_renderstates(
                 drawable_config.drawable,
