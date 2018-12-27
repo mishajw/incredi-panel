@@ -1,7 +1,7 @@
 use crate::error::*;
 
 /// Where to anchor the panel
-#[allow(unused)]
+#[allow(missing_docs)]
 pub enum Anchor {
     TopLeft,
     TopRight,

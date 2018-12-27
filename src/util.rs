@@ -1,3 +1,5 @@
+//! Utility functions
+
 use std::thread;
 
 use crate::error::*;

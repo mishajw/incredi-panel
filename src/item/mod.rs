@@ -1,3 +1,5 @@
+//! Contains items in a panel
+
 mod command;
 pub use self::command::{Command, PulledCommand, PushedCommand};
 
@@ -15,10 +17,12 @@ use crate::window;
 
 use yaml_rust::Yaml;
 
-pub trait Item: ThreadStart + ItemDraw + Send + Sync {}
+/// Implementors can be shown on the panel
+pub trait Item: ItemStart + ItemDraw + Send + Sync {}
 
-/// Start a thread to handle the item
-pub trait ThreadStart {
+/// Can be started, with the assumption it never terminates
+pub trait ItemStart {
+    #[allow(missing_docs)]
     fn start(
         &self,
         window_command_channel: mpsc::Sender<window::Command>,
@@ -27,11 +31,15 @@ pub trait ThreadStart {
 
 /// Draw the item to a window
 pub trait ItemDraw {
+    #[allow(missing_docs)]
     fn draw(&self, window: &mut window::Window) -> Result<()>;
 }
 
+/// Implementors can be created from the configuration
 pub trait ItemFromConfig {
+    /// The name of the item, matched against the `name` field in the config
     fn name() -> &'static str;
 
+    /// Create the item from the config
     fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>>;
 }

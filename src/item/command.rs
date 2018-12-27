@@ -6,11 +6,12 @@ use std::time::Duration;
 
 use crate::error::*;
 use crate::item::PulledItem;
-use crate::item::{Item, ItemFromConfig, TextItem, ThreadStart};
+use crate::item::{Item, ItemFromConfig, ItemStart, TextItem};
 use crate::window;
 
 use yaml_rust::Yaml;
 
+/// A command that can be run
 #[derive(Clone)]
 pub struct Command {
     command_list: Vec<String>,
@@ -28,6 +29,7 @@ impl Command {
         }
     }
 
+    #[allow(missing_docs)]
     fn parse(config: &mut HashMap<String, Yaml>) -> Result<Self> {
         config_get!(command, config, into_string, list);
         config_get!(interpreter, config, into_string);
@@ -71,6 +73,7 @@ impl Command {
         bail!(ErrorKind::ConfigError("No command specified".into()));
     }
 
+    /// Create a `std::process::Command` struct from a command list
     fn create_command(command_list: Vec<String>) -> Result<process::Command> {
         ensure!(
             !command_list.is_empty(),
@@ -89,6 +92,7 @@ impl TextItem for Command {
     }
 }
 
+/// Command that can be pulled at an interval
 #[derive(Clone)]
 pub struct PulledCommand {
     command: Command,
@@ -136,9 +140,10 @@ impl ItemFromConfig for PulledCommand {
     }
 }
 
+/// Command that pushes updates
 pub type PushedCommand = Command;
 
-impl ThreadStart for PushedCommand {
+impl ItemStart for PushedCommand {
     fn start(
         &self,
         window_command_channel: mpsc::Sender<window::Command>,

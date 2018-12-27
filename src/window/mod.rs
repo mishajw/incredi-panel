@@ -1,3 +1,5 @@
+//! Handles window setup and drawing using SFML
+
 mod config;
 mod grid;
 
@@ -28,6 +30,7 @@ const BORDER_THICKNESS: f32 = 3.0;
 pub struct Window {
     /// SFML window used for drawing
     pub sfml_window: RenderWindow,
+    /// Configuration for the window
     pub config: Config,
     items: Vec<Arc<Item>>,
     receive: mpsc::Receiver<Command>,
@@ -79,6 +82,7 @@ impl Window {
         window.window_loop()
     }
 
+    /// Draw a list of drawables to the window
     pub fn draw(&mut self, drawables: Vec<&Drawable>, width: u32, height: u32) {
         let grid_width =
             (width as f32 / self.config.grid_size as f32).ceil() as u32;
@@ -246,9 +250,12 @@ impl Window {
 /// Commands that can be sent to the window
 #[derive(Clone, Copy)]
 pub enum Command {
+    /// SFML window event
     Event(Event),
+    /// Show the display
     Show,
+    /// Hide the display
     Hide,
-    #[allow(unused)]
+    /// Quit the program
     Quit,
 }

@@ -12,13 +12,15 @@ extern crate sfml;
 extern crate log;
 
 #[macro_use]
-mod config;
+pub mod config;
 mod anchor;
 mod dock;
-mod error;
-mod item;
-mod util;
-mod window;
+pub mod error;
+pub mod item;
+pub mod util;
+pub mod window;
+pub use self::anchor::Anchor;
+pub use self::dock::dock_window;
 
 quick_main!(run);
 

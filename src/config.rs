@@ -1,3 +1,5 @@
+//! Utilities for parsing YAML configuration files
+
 use crate::error::*;
 use crate::item;
 use crate::item::ItemFromConfig;
@@ -73,6 +75,7 @@ macro_rules! config_get {
     };
 }
 
+/// Create a window from the config
 pub fn start_window_from_config(config_path: &str) -> Result<()> {
     let yaml = get_yaml(config_path)?;
     let mut yaml_object = get_object(yaml)?;

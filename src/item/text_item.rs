@@ -6,7 +6,9 @@ use sfml::graphics::{Color, Text};
 
 const FONT_SIZE_SCALE: f32 = 1.40;
 
+/// Item that draws text
 pub trait TextItem: Send + Sync {
+    /// Get text to be drawn
     fn get_text(&self) -> Result<String>;
 }
 
