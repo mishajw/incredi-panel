@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::error::*;
 use crate::item::ItemDraw;
+use crate::util;
 use crate::window::{DrawConfig, DrawableConfig, Window};
 
 use sfml::graphics::{Color, Text};
@@ -46,9 +47,10 @@ pub struct TextConfig {
 impl TextConfig {
     #[allow(missing_docs)]
     pub fn parse(config: &mut Config) -> Result<Self> {
+        config_get!(color, config, into_string, "ffffff".into());
         Ok(TextConfig {
             draw_config: DrawConfig::parse(config)?,
-            color: Color::WHITE,
+            color: util::hex_color(&color)?,
         })
     }
 }

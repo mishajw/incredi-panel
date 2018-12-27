@@ -10,6 +10,7 @@ extern crate error_chain;
 extern crate sfml;
 #[macro_use]
 extern crate log;
+extern crate byteorder;
 
 #[macro_use]
 pub mod config;
