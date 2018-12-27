@@ -160,14 +160,15 @@ impl ItemStart for PushedCommand {
     ) -> Result<()>
     {
         loop {
-            trace!("Starting pushed command");
+            debug!("Starting pushed command {:?}", self.command_list);
             let command = Command::create_command(self.command_list.clone())?
                 .spawn()
                 .chain_err(|| "Failed to start command")?;
             let stdout = BufReader::new(command.stdout.unwrap());
             for line in stdout.lines() {
-                *self.command_output.lock().unwrap() =
-                    line.chain_err(|| "Failed to read line")?;
+                let line = line.chain_err(|| "Failed to read line")?;
+                trace!("Got output from pushed command: {}", line);
+                *self.command_output.lock().unwrap() = line;
                 if self.trigger_show {
                     window_command_channel.send(window::Command::Show).unwrap();
                 }
