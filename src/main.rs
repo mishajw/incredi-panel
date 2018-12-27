@@ -30,5 +30,11 @@ fn run() -> error::Result<()> {
         .filter_or(env_logger::DEFAULT_FILTER_ENV, "warning");
     env_logger::Builder::from_env(env).init();
 
-    config::start_window_from_config("incredi.yaml")
+    // Parse config
+    let mut config = config::get_config("incredi.yaml")?;
+    let items = item::parse_items(&mut config)?;
+    let window_config = window::Config::parse(&mut config)?;
+
+    // Start window
+    window::Window::start(window_config, items)
 }

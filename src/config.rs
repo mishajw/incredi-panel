@@ -1,9 +1,6 @@
 //! Utilities for parsing YAML configuration files
 
 use crate::error::*;
-use crate::item;
-use crate::item::ItemFromConfig;
-use crate::window::{Config, Window};
 
 use std::collections::HashMap;
 use std::fs;
@@ -75,22 +72,27 @@ macro_rules! config_get {
     };
 }
 
-/// Create a window from the config
-pub fn start_window_from_config(config_path: &str) -> Result<()> {
+/// Get the configuration from a file
+pub fn get_config(config_path: &str) -> Result<HashMap<String, Yaml>> {
     let yaml = get_yaml(config_path)?;
-    let mut yaml_object = get_object(yaml)?;
+    yaml_to_hash_map(yaml)
+}
 
-    config_get!(items, yaml_object, into_hash, list);
-    let items = get_items(
-        items
-            .into_iter()
-            .map(Yaml::Hash)
-            .map(get_object)
-            .collect::<Result<_>>()?,
-    )?;
-
-    let window_config = Config::parse(&mut yaml_object)?;
-    Window::start(window_config, items)
+/// Convert a yaml object to a hash map
+pub fn yaml_to_hash_map(yaml: Yaml) -> Result<HashMap<String, Yaml>> {
+    yaml.into_hash()
+        .ok_or(ErrorKind::ConfigError("Expected object".into()))?
+        .into_iter()
+        .map(|(key, value)| {
+            let key: String = key
+                .as_str()
+                .ok_or(ErrorKind::ConfigError(
+                    "Found non-string key in yaml".into(),
+                ))?
+                .into();
+            Ok((key, value))
+        })
+        .collect::<Result<_>>()
 }
 
 fn get_yaml(config_path: &str) -> Result<Yaml> {
@@ -108,42 +110,4 @@ fn get_yaml(config_path: &str) -> Result<Yaml> {
         .into());
     }
     Ok(yaml_list.remove(0))
-}
-
-fn get_object(yaml: Yaml) -> Result<HashMap<String, Yaml>> {
-    yaml.into_hash()
-        .ok_or(ErrorKind::ConfigError("Expected object".into()))?
-        .into_iter()
-        .map(|(key, value)| {
-            let key: String = key
-                .as_str()
-                .ok_or(ErrorKind::ConfigError(
-                    "Found non-string key in yaml".into(),
-                ))?
-                .into();
-            Ok((key, value))
-        })
-        .collect::<Result<_>>()
-}
-
-fn get_items(
-    item_yamls: Vec<HashMap<String, Yaml>>,
-) -> Result<Vec<Box<item::Item>>> {
-    item_yamls
-        .into_iter()
-        .map(|mut yaml_object| {
-            config_get!(name, yaml_object, into_string, required);
-            if name == item::PulledCommand::name() {
-                item::PulledCommand::parse(&mut yaml_object)
-            } else if name == item::PushedCommand::name() {
-                item::PushedCommand::parse(&mut yaml_object)
-            } else {
-                Err(ErrorKind::ConfigError(format!(
-                    "Unrecognized name: {}",
-                    name
-                ))
-                .into())
-            }
-        })
-        .collect()
 }

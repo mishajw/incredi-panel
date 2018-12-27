@@ -12,6 +12,7 @@ pub use self::pulled::PulledItem;
 use std::collections::HashMap;
 use std::sync::mpsc;
 
+use crate::config::yaml_to_hash_map;
 use crate::error::*;
 use crate::window;
 
@@ -42,4 +43,36 @@ pub trait ItemFromConfig {
 
     /// Create the item from the config
     fn parse(config: &mut HashMap<String, Yaml>) -> Result<Box<Item>>;
+}
+
+/// Create a list of items from a configuration
+pub fn parse_items(
+    config: &mut HashMap<String, Yaml>,
+) -> Result<Vec<Box<Item>>> {
+    // Get the yaml objects for the items
+    config_get!(items, config, into_hash, list);
+    let item_yamls = items
+        .into_iter()
+        .map(Yaml::Hash)
+        .map(yaml_to_hash_map)
+        .collect::<Result<Vec<_>>>()?;
+
+    // Create the items
+    item_yamls
+        .into_iter()
+        .map(|mut yaml_object| {
+            config_get!(name, yaml_object, into_string, required);
+            if name == PulledCommand::name() {
+                PulledCommand::parse(&mut yaml_object)
+            } else if name == PushedCommand::name() {
+                PushedCommand::parse(&mut yaml_object)
+            } else {
+                Err(ErrorKind::ConfigError(format!(
+                    "Unrecognized name: {}",
+                    name
+                ))
+                .into())
+            }
+        })
+        .collect()
 }
