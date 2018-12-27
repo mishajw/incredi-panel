@@ -6,26 +6,31 @@ incredi will show as a floating window whenever an event happens.
 incredi can be configured with a `.yaml` file:
 ```yaml
 items:
-
-# Various built in items
-- date-time
-- battery
-- cpu-usage
-
 # Call a script every 5 seconds, and place the output in the panel
-- name: script
-  path: path/to/script.sh
-  interval-sec: 5
+- name: pulled-command
+  script-path: path/to/script.sh
+  interval-sec: 5.0
 
 # Run a script in the background, and everytime it prints a line to stdout, put
 # the output in the panel
-- name: background-script
-  path: path/to/script.sh
+- name: pushed-command
+  script-path: path/to/script.sh
   # When the script prints a line, display the panel
-  triggers-show: true
+  trigger-show: true
+
+# Can specifiy commands in the configuration...
+- name: pushed-command
+  command: [tail, -f, /tmp/server.log]
+# ...or write scripts in the configuration
+- name: pulled-command
+  interpreter: python
+  script: |
+    import time
+    print(time.time())
+  interval-sec: 1.0
 
 # Display the panel in the top-left corner
-anchored: "top-left"
+anchor: top-left
 ```
 
 The output of any scripts called should be XML:
@@ -36,9 +41,11 @@ The output of any scripts called should be XML:
 echo "Hello, world!"
 
 # If you want to colour the output, use the `color` tag
+# Note: WIP
 echo "Hello, <color hex='00ff00'>world!</color>"
 
 # If you want to include an image, use the `image` tag
+# Note: WIP
 echo "Battery: <image src='battery-full.png'/>"
 ```
 
