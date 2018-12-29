@@ -39,8 +39,8 @@ impl DrawConfig {
     pub fn parse(config: &mut Config) -> Result<Self> {
         config_get!(vertical_centre_align, config, into_bool, true);
         config_get!(horizontal_centre_align, config, into_bool, true);
-        config_get!(vertical_padding, config, into_i64, 3);
-        config_get!(horizontal_padding, config, into_i64, 3);
+        config_get!(vertical_padding, config, into_i64, 5);
+        config_get!(horizontal_padding, config, into_i64, 10);
         Ok(DrawConfig {
             vertical_centre_align,
             horizontal_centre_align,
