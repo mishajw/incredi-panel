@@ -23,14 +23,14 @@ pub struct Config {
 impl Config {
     #[allow(missing_docs)]
     pub fn parse(yaml_object: &mut config::Config) -> Result<Self> {
-        config_get!(grid_width, yaml_object, as_i64, 15);
-        config_get!(grid_height, yaml_object, as_i64, 10);
-        config_get!(grid_size, yaml_object, into_i64, 17);
+        config_get!(grid_width, yaml_object, as_i64, 6);
+        config_get!(grid_height, yaml_object, as_i64, 4);
+        config_get!(grid_size, yaml_object, into_i64, 40);
         config_get!(show_duration_sec, yaml_object, as_f64, 3.0);
         config_get!(font_path, yaml_object, into_string, required);
-        config_get!(font_size, yaml_object, as_i64, 16);
+        config_get!(font_size, yaml_object, as_i64, 18);
         config_get!(anchor, yaml_object, into_string, "top-right".into());
-        config_get!(edge_distance, yaml_object, into_i64, 50);
+        config_get!(edge_distance, yaml_object, into_i64, 10);
         let font = Rc::new(
             Font::from_file(&font_path).chain_err(|| "Failed to load font")?,
         );
