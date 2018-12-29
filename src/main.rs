@@ -19,16 +19,22 @@ fn run() -> error::Result<()> {
 
     // Parse command line arguments
     let matches = clap_app!(incredi =>
+        (@arg config_path: -c --config +takes_value)
         (@arg fifo_path: -f --fifo-path +takes_value)
     )
     .get_matches();
+    let config_path = matches
+        .value_of("config_path")
+        .map(str::to_string)
+        .map(Ok)
+        .unwrap_or_else(config::default_config_path)?;
     let fifo_path = matches
         .value_of("fifo_path")
         .map(str::to_string)
-        .unwrap_or(ipc::default_fifo_path());
+        .unwrap_or_else(ipc::default_fifo_path);
 
     // Parse config
-    let mut config = config::get_config()?;
+    let mut config = config::get_config(config_path)?;
     let items = item::parse_items(&mut config)?;
     let window_config = window::Config::parse(&mut config)?;
 

@@ -77,12 +77,16 @@ macro_rules! config_get {
     };
 }
 
-/// Get the configuration from a file
-pub fn get_config() -> Result<Config> {
-    let home = env::var("HOME").chain_err(|| "")?;
+/// Get the default configuration path
+pub fn default_config_path() -> Result<String> {
+    let home = env::var("HOME").chain_err(|| "HOME variable does not exist")?;
     let config_home =
         env::var("XDG_CONFIG_HOME").unwrap_or(format!("{}/.config", home));
-    let config_path = format!("{}/incredi/config.yaml", config_home);
+    Ok(format!("{}/incredi/config.yaml", config_home))
+}
+
+/// Get the configuration from a file
+pub fn get_config(config_path: String) -> Result<Config> {
     let yaml = get_yaml(&config_path)?;
     yaml_to_hash_map(yaml)
 }
