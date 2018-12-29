@@ -12,6 +12,10 @@ path = "src/lib.rs"
 name = "incredi"
 path = "src/main.rs"
 
+[[bin]]
+name = "incredic"
+path = "src/cli.rs"
+
 [dependencies]
 yaml-rust = "*"
 quick-xml = "*"
@@ -20,3 +24,5 @@ log = "*"
 env_logger = "*"
 sfml = "*"
 byteorder = "*"
+clap = "*"
+nix = "*"

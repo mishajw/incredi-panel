@@ -1,5 +1,6 @@
 //! Handles window setup and drawing using SFML
 
+mod command;
 mod config;
 mod draw;
 mod grid;
@@ -8,12 +9,14 @@ use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Instant;
 
+pub use self::command::Command;
 pub use self::config::Config;
 pub use self::draw::{DrawConfig, DrawableConfig};
 use self::grid::Grid;
 use crate::anchor::Anchor;
 use crate::dock::dock_window;
 use crate::error::*;
+use crate::ipc;
 use crate::item::Item;
 use crate::util;
 
@@ -43,7 +46,12 @@ pub struct Window {
 
 impl Window {
     #[allow(missing_docs)]
-    pub fn start(config: Config, items: Vec<Box<Item>>) -> Result<()> {
+    pub fn start(
+        config: Config,
+        items: Vec<Box<Item>>,
+        fifo_path: String,
+    ) -> Result<()>
+    {
         info!("Starting window");
 
         // Start all the item threads
@@ -68,6 +76,7 @@ impl Window {
         );
         sfml_window.set_vertical_sync_enabled(true);
         send.send(Command::Show).unwrap();
+        ipc::spawn_listen_thread(send.clone(), fifo_path);
         dock_window(WINDOW_NAME)?;
 
         // Create incredi window object
@@ -259,17 +268,4 @@ impl Window {
 
         Vector2i::new(x as i32, y as i32)
     }
-}
-
-/// Commands that can be sent to the window
-#[derive(Clone, Copy)]
-pub enum Command {
-    /// SFML window event
-    Event(Event),
-    /// Show the display
-    Show,
-    /// Hide the display
-    Hide,
-    /// Quit the program
-    Quit,
 }

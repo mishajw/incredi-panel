@@ -10,12 +10,14 @@ extern crate sfml;
 #[macro_use]
 extern crate log;
 extern crate byteorder;
+extern crate nix;
 
 #[macro_use]
 pub mod config;
 mod anchor;
 mod dock;
 pub mod error;
+pub mod ipc;
 pub mod item;
 pub mod util;
 pub mod window;
