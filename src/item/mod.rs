@@ -41,11 +41,11 @@ pub trait ItemFromConfig {
     fn name() -> &'static str;
 
     /// Create the item from the config
-    fn parse(config: &mut Config) -> Result<Box<Item>>;
+    fn parse(config: &mut Config) -> Result<Box<dyn Item>>;
 }
 
 /// Create a list of items from a configuration
-pub fn parse_items(config: &mut Config) -> Result<Vec<Box<Item>>> {
+pub fn parse_items(config: &mut Config) -> Result<Vec<Box<dyn Item>>> {
     // Get the yaml objects for the items
     config_get!(items, config, into_hash, list);
     let item_yamls = items

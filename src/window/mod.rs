@@ -37,7 +37,7 @@ pub struct Window {
     pub sfml_window: RenderWindow,
     /// Configuration for the window
     pub config: Config,
-    items: Vec<Arc<Item>>,
+    items: Vec<Arc<dyn Item>>,
     receive: mpsc::Receiver<Command>,
     send: mpsc::Sender<Command>,
     last_shown: Option<Instant>,
@@ -48,7 +48,7 @@ impl Window {
     #[allow(missing_docs)]
     pub fn start(
         config: Config,
-        items: Vec<Box<Item>>,
+        items: Vec<Box<dyn Item>>,
         fifo_path: String,
     ) -> Result<()>
     {
@@ -56,9 +56,9 @@ impl Window {
 
         // Start all the item threads
         let (send, receive) = mpsc::channel::<Command>();
-        let items: Vec<Arc<Item>> =
+        let items: Vec<Arc<dyn Item>> =
             items.into_iter().map(|i| i.into()).collect();
-        items.iter().for_each(|i: &Arc<Item>| {
+        items.iter().for_each(|i: &Arc<dyn Item>| {
             let i = i.clone();
             let send = send.clone();
             util::start_thread(move || i.start(send));

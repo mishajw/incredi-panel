@@ -141,7 +141,7 @@ impl Item for PulledCommand {}
 impl ItemFromConfig for PulledCommand {
     fn name() -> &'static str { "pulled-command" }
 
-    fn parse(config: &mut Config) -> Result<Box<Item>> {
+    fn parse(config: &mut Config) -> Result<Box<dyn Item>> {
         config_get!(interval_sec, config, as_f64, required);
         Ok(Box::new(PulledCommand {
             command: Command::parse(config)?,
@@ -182,7 +182,7 @@ impl Item for PushedCommand {}
 impl ItemFromConfig for PushedCommand {
     fn name() -> &'static str { "pushed-command" }
 
-    fn parse(config: &mut Config) -> Result<Box<Item>> {
+    fn parse(config: &mut Config) -> Result<Box<dyn Item>> {
         Ok(Box::new(PushedCommand::parse(config)?))
     }
 }

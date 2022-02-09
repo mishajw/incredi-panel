@@ -6,14 +6,14 @@ use sfml::graphics::{Drawable, RenderStates};
 /// Configure how to draw a `Drawable` item
 pub struct DrawableConfig<'a, 'b, 'c, 'd> {
     /// The drawable to draw
-    pub drawable: &'a Drawable,
+    pub drawable: &'a dyn Drawable,
     /// Transformations to apply to the drawable
     pub render_states: RenderStates<'b, 'c, 'd>,
 }
 
 impl<'a, 'b, 'c, 'd> DrawableConfig<'a, 'b, 'c, 'd> {
     #[allow(missing_docs)]
-    pub fn new(drawable: &'a Drawable) -> Self {
+    pub fn new(drawable: &'a dyn Drawable) -> Self {
         DrawableConfig {
             drawable,
             render_states: RenderStates::default(),
